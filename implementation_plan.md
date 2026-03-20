@@ -68,23 +68,23 @@ This document outlines a phased approach for developing a command-line AI assist
 **Goal**: Complete the toolset and define a production-style agent registered in a Mastra Workspace.
 
 ### Specific Deliverables
-- `src/tools/weather-tool.ts`: Weather fetching tool.
-- `src/tools/calculator-tool.ts`: Simple calculation tool.
-- `src/tools/search-tool.ts`: Web search tool.
-- `src/agent.ts`: Definition of the Mastra Agent with all 4 tools and reasoning model.
+- `src/tools/flight-tool.ts`: Flight schedule and pricing tool.
+- `src/tools/hotel-tool.ts`: Hotel information and pricing tool.
+- `src/tools/currency-tool.ts`: Currency conversion tool.
+- `src/agent.ts`: Definition of the Mastra Agent with all tools and reasoning model.
 - `src/mastra.ts`: Mastra Workspace configuration and server initialization.
 
 ### Measurable Goals
-- Agent successfully routes queries to the correct tool (RAG vs. Search vs. Calculator).
+- Agent successfully routes queries to the correct tool (RAG vs. Flight vs. Hotel vs. Currency).
 - Mastra server starts and exposes the agent via internal APIs.
 
 ### Technical Requirements
 - Mastra Agent and Workspace APIs.
-- Tool-specific logic for Weather and Search (using mock or real APIs).
+- Tool-specific logic for Flights, Hotels, and Currency.
 
 ### Testing Criteria
 - Verify agent registration via Mastra diagnostics.
-- Cross-tool validation: Ask "What's the weather in London?" and "Calculate 2+2" and verify correct tool usage.
+- Cross-tool validation: Ask "What's the flight from London to Paris?" and "Calculate USD to NGN conversion" and verify correct tool usage.
 
 ### Exit Criteria
 - All 4 tools integrated and functional.
