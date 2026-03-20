@@ -36,8 +36,8 @@ async function main() {
       });
 
       for await (const chunk of result.fullStream) {
-        if (chunk.type === 'text-delta' && chunk.payload?.text) {
-          process.stdout.write(chunk.payload.text);
+        if (chunk.type === 'text-delta' && (chunk as any).textDelta) {
+          process.stdout.write((chunk as any).textDelta);
         }
       }
       process.stdout.write('\n');

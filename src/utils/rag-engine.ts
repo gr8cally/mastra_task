@@ -38,7 +38,13 @@ export class RAGEngine {
       });
       console.log(`Collection ${this.collectionName} ready.`);
     } catch (error) {
-      console.log(`Note: Collection setup info:`, (error as Error).message);
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('already exists')) {
+        console.log(`Note: Collection ${this.collectionName} already exists.`);
+      } else {
+        console.error(`Fatal: Failed to connect to ChromaDB or create index:`, errorMessage);
+        throw error; // Re-throw fatal connection errors
+      }
     }
 
     await this.indexDirectory(path.join(process.cwd(), 'data'));

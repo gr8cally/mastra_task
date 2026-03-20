@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 import { RAGEngine } from './utils/rag-engine.js';
 import { createRagTool } from './tools/rag-tool.js';
 import dotenv from 'dotenv';
@@ -13,15 +14,19 @@ export const initializeAgent = async () => {
 
   const ragTool = createRagTool(ragEngine);
 
-  const modelId = process.env.REASONING_MODEL_NAME || 'nvidia/nemotron-3-nano-30b-a3b:free';
+  // Use MODEL_NAME env variable as per task.md requirements
+  const modelId = process.env.MODEL_NAME || 'nvidia/nemotron-3-nano-30b-a3b:free';
 
   return new Agent({
     id: 'mastra-cli-assistant',
     name: 'Mastra Assistant',
     instructions: 'You are a helpful AI assistant powered by Mastra. You have access to a knowledge base through a RAG tool. Use it to provide accurate answers about the provided documents.',
+    // Correctly typed model identifier
     model: modelId as any,
     tools: {
       rag: ragTool,
     },
+    // Maintain conversation memory as per task.md requirements
+    memory: new Memory(),
   });
 };

@@ -38,12 +38,12 @@ This document outlines a phased approach for developing a command-line AI assist
 ### Specific Deliverables
 - `data/`: Directory for storing documents to be indexed.
 - `src/tools/rag-tool.ts`: RAG tool implementation with ChromaDB integration.
-- `src/utils/rag-engine.ts`: Logic for auto-indexing and querying, using the Hugging Face API for embeddings.
+- `src/utils/rag-engine.ts`: Logic for auto-indexing and querying, using the Hugging Face API (via `@huggingface/inference`) for embeddings.
 - `src/tools/index.ts`: Tool export registry.
 
 ### Measurable Goals
 - Any file placed in `data/` is automatically parsed and indexed into ChromaDB on startup.
-- Embeddings are generated via the Hugging Face Inference API.
+- Embeddings are generated via the Hugging Face Inference API (Non-local).
 - RAG tool correctly formats retrieved snippets for the reasoning model.
 
 ### Technical Requirements
