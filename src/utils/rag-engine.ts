@@ -89,6 +89,17 @@ export class RAGEngine {
       inputs: texts,
     }) as number[][];
 
+    // Delete old vectors for this file before upserting new ones
+    // (deleteFilter in upsert is not supported by ChromaVector)
+    try {
+      await this.vectorStore.deleteVectors({
+        indexName: this.collectionName,
+        filter: { source: filePath } as any,
+      });
+    } catch (_) {
+      // Ignore errors if no vectors exist yet
+    }
+
     await this.vectorStore.upsert({
       indexName: this.collectionName,
       vectors: embeddings,
@@ -97,7 +108,6 @@ export class RAGEngine {
         text: c.text,
         source: filePath
       })),
-      deleteFilter: { source: filePath } as any,
     });
 
     console.log(`Successfully indexed ${chunks.length} chunks from ${filePath}`);
