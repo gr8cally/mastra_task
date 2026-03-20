@@ -1,6 +1,6 @@
 import { MDocument } from '@mastra/rag';
 import { ChromaVector } from '@mastra/chroma';
-import { ModelRouterEmbeddingModel } from '@mastra/core/llm';
+import { HfInference } from '@huggingface/inference';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -9,35 +9,31 @@ dotenv.config();
 
 export class RAGEngine {
   private vectorStore: ChromaVector;
-  private embeddingModel: ModelRouterEmbeddingModel;
+  private hf: HfInference;
   private collectionName = 'mastra_docs';
+  private embeddingModel: string;
 
   constructor() {
     const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
     const parsedUrl = new URL(chromaUrl);
     
-    // Initialize Chroma Vector Store
-    // host and port are extracted from CHROMA_URL
+    this.hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    this.embeddingModel = process.env.EMBEDDING_MODEL_NAME || 'sentence-transformers/all-MiniLM-L6-v2';
+
     this.vectorStore = new ChromaVector({
       id: 'chroma-store',
       host: parsedUrl.hostname,
       port: parseInt(parsedUrl.port) || 8000,
     });
-
-    // Initialize Embedding Model
-    const modelId = process.env.EMBEDDING_MODEL_NAME || 'openai/text-embedding-3-small';
-    this.embeddingModel = new ModelRouterEmbeddingModel(modelId);
   }
 
   async init() {
     console.log('Initializing RAG Engine...');
-    
-    // Ensure index exists
+
     try {
-      // 1536 is standard for openai/text-embedding-3-small
       await this.vectorStore.createIndex({
         indexName: this.collectionName,
-        dimension: 1536,
+        dimension: 384, // Dimension for all-MiniLM-L6-v2
         metric: 'cosine',
       });
       console.log(`Collection ${this.collectionName} ready.`);
@@ -69,34 +65,30 @@ export class RAGEngine {
     console.log(`Indexing file: ${filePath}`);
     const content = fs.readFileSync(filePath, 'utf-8');
     
-    // Create MDocument
     const doc = MDocument.fromText(content, { 
       source: filePath, 
       filename: path.basename(filePath)
     });
 
-    // Chunk the document
     const chunks = await doc.chunk({
       strategy: 'recursive',
       maxSize: 1000,
       overlap: 200,
     });
 
-    // Extract text for embeddings
     const texts = chunks.map(c => c.text);
     
-    // Generate embeddings
-    const { embeddings } = await this.embeddingModel.doEmbed({
-      values: texts,
-    });
+    const embeddings = await this.hf.featureExtraction({
+      model: this.embeddingModel,
+      inputs: texts,
+    }) as number[][];
 
-    // Upsert with atomic delete of old source
     await this.vectorStore.upsert({
       indexName: this.collectionName,
       vectors: embeddings,
       metadata: chunks.map(c => ({
         ...c.metadata,
-        text: c.text, // Store text in metadata for retrieval
+        text: c.text,
         source: filePath
       })),
       deleteFilter: { source: filePath } as any,
@@ -106,15 +98,14 @@ export class RAGEngine {
   }
 
   async query(userQuery: string) {
-    // Generate embedding for query
-    const { embeddings } = await this.embeddingModel.doEmbed({
-      values: [userQuery],
-    });
+    const queryVector = await this.hf.featureExtraction({
+      model: this.embeddingModel,
+      inputs: userQuery,
+    }) as number[];
 
-    // Query vector store
     const results = await this.vectorStore.query({
       indexName: this.collectionName,
-      queryVector: embeddings[0],
+      queryVector,
       topK: 5,
     });
 

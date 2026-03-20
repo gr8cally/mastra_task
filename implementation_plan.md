@@ -33,34 +33,34 @@ This document outlines a phased approach for developing a command-line AI assist
 ---
 
 ## Phase 2: RAG Implementation & Tool Foundation
-**Goal**: Implement a robust RAG (Retrieval-Augmented Generation) system using ChromaDB and hybrid retrieval, with auto-indexing capabilities.
+**Goal**: Implement a robust RAG (Retrieval-Augmented Generation) system using ChromaDB and the Hugging Face Inference API for embeddings.
 
 ### Specific Deliverables
 - `data/`: Directory for storing documents to be indexed.
 - `src/tools/rag-tool.ts`: RAG tool implementation with ChromaDB integration.
-- `src/utils/rag-engine.ts`: Logic for hybrid retrieval (Vector + BM25/Alternative) and auto-indexing.
+- `src/utils/rag-engine.ts`: Logic for auto-indexing and querying, using the Hugging Face API for embeddings.
 - `src/tools/index.ts`: Tool export registry.
 
 ### Measurable Goals
 - Any file placed in `data/` is automatically parsed and indexed into ChromaDB on startup.
-- Hybrid retrieval returns relevant context from both semantic and keyword matches.
+- Embeddings are generated via the Hugging Face Inference API.
 - RAG tool correctly formats retrieved snippets for the reasoning model.
 
 ### Technical Requirements
-- Mastra RAG package (`@mastra/rag`).
+- `@huggingface/inference` for API-based embeddings.
+- `HUGGINGFACE_API_KEY` environment variable.
 - ChromaDB locally hosted at `CHROMA_URL` (default: http://localhost:8000).
-- `EMBEDDING_MODEL_NAME` for vectorization.
+- `EMBEDDING_MODEL_NAME` for vectorization (e.g., `sentence-transformers/all-MiniLM-L6-v2`).
 - `REASONING_MODEL_NAME` for the agent's core logic.
-- File system watchers or startup globbing for the `data/` folder.
 
 ### Testing Criteria
 - Verify ChromaDB connectivity on startup.
 - Drop a `.txt` or `.md` file in `data/` and verify it appears in the vector store.
-- Test queries with varying terminology to verify hybrid search effectiveness.
+- Test queries to confirm that the RAG tool is retrieving relevant context.
 
 ### Exit Criteria
-- RAG system is fully functional and data-persistent.
-- Auto-indexing logic is robust against empty or unsupported files.
+- RAG system is fully functional using the Hugging Face API.
+- Auto-indexing logic is robust.
 
 ---
 

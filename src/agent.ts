@@ -13,7 +13,7 @@ export const initializeAgent = async () => {
 
   const ragTool = createRagTool(ragEngine);
 
-  const modelId = process.env.REASONING_MODEL_NAME || 'openai/gpt-4o';
+  const modelId = process.env.REASONING_MODEL_NAME || 'nvidia/nemotron-3-nano-30b-a3b:free';
 
   return new Agent({
     id: 'mastra-cli-assistant',
