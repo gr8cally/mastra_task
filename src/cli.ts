@@ -37,22 +37,55 @@ async function main() {
         break;
       }
 
-      process.stdout.write('Assistant: ');
+      process.stdout.write('Assistant: Thinking...');
 
       try {
         const result = await agent.stream(userInput, {
           memory: { thread: { id: threadId }, resource: 'cli-app' },
         });
 
+        // Clear the "Thinking..." message
+        process.stdout.write('\rAssistant:           \rAssistant: ');
+
+        let hasOutput = false;
+        let chunkCount = 0;
+        let lastChunkType = '';
+        let fullText = '';
+
         for await (const chunk of result.fullStream) {
+          chunkCount++;
+          lastChunkType = (chunk as any).type || 'unknown';
           const rendered = renderStreamChunk(chunk);
           if (rendered) {
             process.stdout.write(rendered);
+            if (rendered !== '.') {
+              hasOutput = true;
+              fullText += rendered;
+            }
+          }
+        }
+        
+        // Final fallback: if we have reasoning dots but no text, 
+        // check if result.text has anything (Mastra might have consolidated it)
+        if (!hasOutput) {
+          const finalResponse = await result.text;
+          if (finalResponse && finalResponse.trim()) {
+            process.stdout.write(finalResponse);
+            hasOutput = true;
+          }
+        }
+
+        if (!hasOutput) {
+          if (chunkCount === 0) {
+            process.stdout.write('[Empty stream - no chunks received]');
+          } else {
+            process.stdout.write(`[Model finished after ${chunkCount} chunks, but provided no natural language response]`);
           }
         }
         process.stdout.write('\n');
       } catch (error) {
-        console.error('\nError:', (error as Error).message);
+        process.stdout.write('\rAssistant: ');
+        console.error('\nError during stream:', (error as Error).message);
       }
     }
   } catch (error: any) {

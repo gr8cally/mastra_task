@@ -10,26 +10,28 @@ export const createRagTool = (ragEngine: RAGEngine) => {
       query: z.string().describe('The search query to find relevant information.'),
     }),
     execute: async ({ query }) => {
-      const results = await ragEngine.query(query);
+      console.log(`[RAG Tool] Searching for: "${query}"...`);
+      let results = await ragEngine.query(query);
       
-      if (!results || results.length === 0) {
-        return {
-          text: 'No relevant information found in the knowledge base.',
-        };
+      // Handle potential results structure variations from ChromaVector
+      if (results && !Array.isArray(results) && (results as any).results) {
+        results = (results as any).results;
+      }
+      
+      if (!results || !Array.isArray(results) || results.length === 0) {
+        return 'No relevant information found in the knowledge base.';
       }
 
       // Format results for the LLM
       const formattedResults = results
-        .map((res, index) => {
+        .map((res: any, index: number) => {
           const source = res.metadata?.filename || res.metadata?.source || 'Unknown Source';
           const content = res.metadata?.text || res.document || 'No content available';
-          return `[Source ${index + 1}: ${source}]\n${content}`;
+          return `Snippet ${index + 1} (from ${source}):\n${content}`;
         })
         .join('\n\n---\n\n');
 
-      return {
-        text: `Found the following relevant information:\n\n${formattedResults}`,
-      };
+      return `The following information was found in the documents:\n\n${formattedResults}`;
     },
   });
 };

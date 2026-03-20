@@ -1,19 +1,46 @@
 export const renderStreamChunk = (chunk: any): string | null => {
-  switch (chunk.type) {
+  if (!chunk || typeof chunk !== 'object') {
+    return null;
+  }
+
+  // Handle various AI SDK and Mastra chunk formats
+  const type = chunk.type || (chunk.toolCall ? 'tool-call' : chunk.textDelta ? 'text-delta' : 'unknown');
+
+  switch (type) {
     case 'text-delta':
-      return chunk.textDelta || null;
+      return chunk.textDelta || chunk.delta?.content || chunk.content || '';
+    
+    case 'reasoning-delta':
+      // Make reasoning much more subtle (just a dot)
+      return '.';
     
     case 'tool-call':
-      return `\n[Using tool: ${chunk.toolName}...]\n`;
+      // OpenRouter and other providers vary in where they put the name
+      const name = chunk.toolName || 
+                   chunk.name || 
+                   chunk.toolCall?.name || 
+                   chunk.toolCall?.toolName || 
+                   (chunk.toolCall?.function?.name) || 
+                   'unknown';
+      return `\n[Using tool: ${name}...]\n`;
     
     case 'tool-result':
-      // Optionally show tool result if it's brief
-      return null;
+      return '';
     
     case 'error':
-      return `\n[Error: ${chunk.error}]\n`;
+      const errorMsg = chunk.error?.message || chunk.error || 'Unknown error';
+      return `\n[Error: ${errorMsg}]\n`;
+
+    case 'finish':
+      return '';
 
     default:
+      // Fallback for common patterns in various providers
+      if (typeof chunk.textDelta === 'string') return chunk.textDelta;
+      if (typeof chunk.content === 'string') return chunk.content;
+      if (typeof chunk.delta?.content === 'string') return chunk.delta.content;
+      if (typeof chunk.reasoning === 'string' || type === 'reasoning') return '.';
+      
       return null;
   }
 };
