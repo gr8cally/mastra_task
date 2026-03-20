@@ -1,5 +1,6 @@
 import { createInterface } from 'readline/promises';
 import { initializeMastra } from './mastra.js';
+import { renderStreamChunk } from './utils/stream-renderer.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,7 +19,7 @@ async function main() {
 
   console.log('\nReady! Ask anything about your documents (or type "exit" to quit).');
 
-  // Simple thread management
+  // Simple thread management for persistent memory
   const threadId = `cli-session-${Date.now()}`;
 
   while (true) {
@@ -36,8 +37,9 @@ async function main() {
       });
 
       for await (const chunk of result.fullStream) {
-        if (chunk.type === 'text-delta' && (chunk as any).textDelta) {
-          process.stdout.write((chunk as any).textDelta);
+        const rendered = renderStreamChunk(chunk);
+        if (rendered) {
+          process.stdout.write(rendered);
         }
       }
       process.stdout.write('\n');
