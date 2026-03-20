@@ -2,13 +2,13 @@
 
 This document outlines a phased approach for developing a command-line AI assistant using the Mastra TypeScript Agent Framework.
 
-## Phase 1: Project Setup & Infrastructure
+## Phase 1: Project Setup & Infrastructure (Completed)
 **Goal**: Establish a robust TypeScript development environment and configure essential dependencies.
 
 ### Specific Deliverables
-- `package.json`: Project configuration and dependency management.
-- `tsconfig.json`: TypeScript compiler settings.
-- `.env-example`: Template for required environment variables.
+- `package.json`: Project configuration and dependency management (ESM-ready with `tsx`).
+- `tsconfig.json`: TypeScript compiler settings (`NodeNext`).
+- `.env-example`: Template for required environment variables (Updated for RAG & Models).
 - `.gitignore`: Standard exclusion patterns for Node.js projects.
 
 ### Measurable Goals
@@ -32,58 +32,63 @@ This document outlines a phased approach for developing a command-line AI assist
 
 ---
 
-## Phase 2: Tool Implementation
-**Goal**: Develop the four required agent tools, including a functional RAG (Retrieval-Augmented Generation) tool.
+## Phase 2: RAG Implementation & Tool Foundation
+**Goal**: Implement a robust RAG (Retrieval-Augmented Generation) system using ChromaDB and the Hugging Face Inference API for embeddings.
 
 ### Specific Deliverables
-- `src/tools/rag-tool.ts`: Implementation of the RAG tool for document search.
-- `src/tools/weather-tool.ts`: Implementation of a weather fetching tool.
-- `src/tools/calculator-tool.ts`: Implementation of a simple calculation tool.
-- `src/tools/search-tool.ts`: Implementation of a web search tool.
-- `src/tools/index.ts`: Export all tools for agent consumption.
+- `data/`: Directory for storing documents to be indexed.
+- `src/tools/rag-tool.ts`: RAG tool implementation with ChromaDB integration.
+- `src/utils/rag-engine.ts`: Logic for auto-indexing and querying, using the Hugging Face API (via `@huggingface/inference`) for embeddings.
+- `src/tools/index.ts`: Tool export registry.
 
 ### Measurable Goals
-- All 4 tools are defined with clear input schemas and logic.
-- RAG tool can successfully index and query sample documents.
+- Any file placed in `data/` is automatically parsed and indexed into ChromaDB on startup.
+- Embeddings are generated via the Hugging Face Inference API (Non-local).
+- RAG tool correctly formats retrieved snippets for the reasoning model.
 
 ### Technical Requirements
-- Mastra's tool definition API.
-- Vector database integration for the RAG tool (e.g., ChromaDB, Pinecone, or a local mock).
-- LLM provider API keys for indexing/search (if applicable).
+- `@huggingface/inference` for API-based embeddings.
+- `HUGGINGFACE_API_KEY` environment variable.
+- ChromaDB locally hosted at `CHROMA_URL` (default: http://localhost:8000).
+- `EMBEDDING_MODEL_NAME` for vectorization (e.g., `sentence-transformers/all-MiniLM-L6-v2`).
+- `REASONING_MODEL_NAME` for the agent's core logic.
 
 ### Testing Criteria
-- Unit tests for each tool's core logic.
-- Integration tests verifying the RAG tool returns relevant snippets.
+- Verify ChromaDB connectivity on startup.
+- Drop a `.txt` or `.md` file in `data/` and verify it appears in the vector store.
+- Test queries to confirm that the RAG tool is retrieving relevant context.
 
 ### Exit Criteria
-- All 4 tools are fully functional and ready for agent integration.
-- Tool schemas are properly documented.
+- RAG system is fully functional using the Hugging Face API.
+- Auto-indexing logic is robust.
 
 ---
 
-## Phase 3: Mastra Agent & Workspace Configuration
-**Goal**: Define a production-style agent and register it within a Mastra Workspace.
+## Phase 3: Secondary Tools & Agent Integration
+**Goal**: Complete the toolset and define a production-style agent registered in a Mastra Workspace.
 
 ### Specific Deliverables
-- `src/agent.ts`: Definition of the Mastra Agent with its 4 tools.
+- `src/tools/weather-tool.ts`: Weather fetching tool.
+- `src/tools/calculator-tool.ts`: Simple calculation tool.
+- `src/tools/search-tool.ts`: Web search tool.
+- `src/agent.ts`: Definition of the Mastra Agent with all 4 tools and reasoning model.
 - `src/mastra.ts`: Mastra Workspace configuration and server initialization.
-- `src/server.ts`: Logic to start and manage the Mastra server.
 
 ### Measurable Goals
-- Mastra server starts without errors.
-- Agent is correctly registered in the workspace and accessible via internal APIs.
+- Agent successfully routes queries to the correct tool (RAG vs. Search vs. Calculator).
+- Mastra server starts and exposes the agent via internal APIs.
 
 ### Technical Requirements
 - Mastra Agent and Workspace APIs.
-- Configuration for `OPENROUTER_API_KEY` and `MODEL_NAME`.
+- Tool-specific logic for Weather and Search (using mock or real APIs).
 
 ### Testing Criteria
-- Verify agent registration via Mastra's internal diagnostics.
-- Send a sample prompt to the agent and confirm it selects the correct tools.
+- Verify agent registration via Mastra diagnostics.
+- Cross-tool validation: Ask "What's the weather in London?" and "Calculate 2+2" and verify correct tool usage.
 
 ### Exit Criteria
-- Mastra server is running.
-- Agent is ready to receive requests.
+- All 4 tools integrated and functional.
+- Mastra server running and agent ready.
 
 ---
 
@@ -106,8 +111,8 @@ This document outlines a phased approach for developing a command-line AI assist
 
 ### Testing Criteria
 - Manual interaction testing: prompt -> stream response -> repeat.
-- Verify that previous turns are remembered (e.g., "What did I just say?").
-- Simulate errors (e.g., network timeout) and verify graceful handling.
+- Verify that previous turns are remembered.
+- Simulate errors (e.g., ChromaDB down) and verify graceful handling.
 
 ### Exit Criteria
 - Functional CLI that satisfies all UX requirements.
@@ -127,12 +132,12 @@ This document outlines a phased approach for developing a command-line AI assist
 - Zero known critical bugs.
 
 ### Technical Requirements
-- Linting and formatting checks (ESLint/Prettier).
+- Linting and formatting checks.
 
 ### Testing Criteria
-- End-to-end testing of the entire workflow (Setup -> Run -> Interact -> Exit).
+- End-to-end testing of the entire workflow (Setup -> Data Load -> Run -> Interact -> Exit).
 - Latency and error handling validation.
 
 ### Exit Criteria
 - All tests pass.
-- Project is ready for handoff/deployment.
+- Project is ready for handoff.
