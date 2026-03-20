@@ -1,2 +1,4 @@
 export * from './rag-tool.js';
-// Secondary tools (Weather, Calculator, Search) will be exported here in Phase 3
+export * from './flight-tool.js';
+export * from './hotel-tool.js';
+export * from './currency-tool.js';
