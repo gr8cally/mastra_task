@@ -119,17 +119,20 @@ export class RAGEngine {
   }
 
   async query(userQuery: string) {
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Generating embedding for query: "${userQuery}"`);
     const queryVector = await this.hf.featureExtraction({
       model: this.embeddingModel,
       inputs: userQuery,
     }) as number[];
 
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Querying vector store...`);
     const results = await this.vectorStore.query({
       indexName: this.collectionName,
       queryVector,
       topK: 5,
     });
 
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Found ${results?.length || 0} results.`);
     return results;
   }
 }

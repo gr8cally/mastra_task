@@ -42,44 +42,58 @@ async function main() {
       try {
         const result = await agent.stream(userInput, {
           memory: { thread: { id: threadId }, resource: 'cli-app' },
+          maxSteps: 5, // Explicitly allow tool loops
         });
 
         // Clear the "Thinking..." message
         process.stdout.write('\rAssistant:           \rAssistant: ');
 
-        let hasOutput = false;
+        let hasTextOutput = false;
         let chunkCount = 0;
         let lastChunkType = '';
-        let fullText = '';
 
         for await (const chunk of result.fullStream) {
           chunkCount++;
           lastChunkType = (chunk as any).type || 'unknown';
+          
+          if (process.env.DEBUG === 'true') {
+             console.log(`\n[DEBUG CHUNK ${chunkCount}]:`, JSON.stringify(chunk));
+          }
+
           const rendered = renderStreamChunk(chunk);
           if (rendered) {
-            process.stdout.write(rendered);
-            if (rendered !== '.') {
-              hasOutput = true;
-              fullText += rendered;
+            const text = rendered.text || '';
+            if (text) {
+              process.stdout.write(text);
+            }
+            if (rendered.type === 'text' && text.trim()) {
+              hasTextOutput = true;
             }
           }
         }
         
-        // Final fallback: if we have reasoning dots but no text, 
+        // Final fallback: if we have reasoning/tools but NO natural language text, 
         // check if result.text has anything (Mastra might have consolidated it)
-        if (!hasOutput) {
-          const finalResponse = await result.text;
-          if (finalResponse && finalResponse.trim()) {
-            process.stdout.write(finalResponse);
-            hasOutput = true;
+        if (!hasTextOutput) {
+          if (process.env.DEBUG === 'true') console.log('\n[DEBUG]: No text output detected in stream, attempting fallback to result.text...');
+          try {
+            const finalResponse = await result.text;
+            if (finalResponse && finalResponse.trim()) {
+              process.stdout.write(finalResponse);
+              hasTextOutput = true;
+            }
+          } catch (e) {
+            if (process.env.DEBUG === 'true') console.error('\n[DEBUG ERROR]: result.text failed:', (e as Error).message);
           }
         }
 
-        if (!hasOutput) {
+        if (!hasTextOutput) {
           if (chunkCount === 0) {
             process.stdout.write('[Empty stream - no chunks received]');
           } else {
-            process.stdout.write(`[Model finished after ${chunkCount} chunks, but provided no natural language response]`);
+            // If we're here, it means the model really didn't say anything human-readable.
+            // We'll try to provide a generic confirmation if tools were called.
+            process.stdout.write('[Task completed, but the model provided no text summary]');
           }
         }
         process.stdout.write('\n');
