@@ -1,12 +1,13 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import { MastraCompositeStore } from '@mastra/core/storage';
 import { RAGEngine } from './utils/rag-engine.js';
 import { createRagTool, flightTool, hotelTool, currencyTool } from './tools/index.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const initializeAgent = async () => {
+export const initializeAgent = async (storage?: MastraCompositeStore) => {
   const ragEngine = new RAGEngine();
   
   // Initialize RAG engine (this will index files in data/ on startup)
@@ -15,7 +16,13 @@ export const initializeAgent = async () => {
   const ragTool = createRagTool(ragEngine);
 
   // Use MODEL_NAME env variable as per task.md requirements
-  const modelId = process.env.MODEL_NAME || 'nvidia/nemotron-3-nano-30b-a3b:free';
+  let modelId = process.env.MODEL_NAME || 'nvidia/nemotron-3-nano-30b-a3b:free';
+
+  // Ensure OpenRouter models are correctly prefixed to avoid ambiguity with native providers
+  if (!modelId.startsWith('openrouter/') && (modelId.includes(':free') || modelId.startsWith('nvidia/'))) {
+    console.log(`Note: Prefixing model "${modelId}" with "openrouter/" for correct routing.`);
+    modelId = `openrouter/${modelId}`;
+  }
 
   return new Agent({
     id: 'mastra-cli-assistant',
@@ -30,6 +37,8 @@ export const initializeAgent = async () => {
       currency: currencyTool,
     },
     // Maintain conversation memory as per task.md requirements
-    memory: new Memory(),
+    memory: new Memory({
+      storage,
+    }),
   });
 };

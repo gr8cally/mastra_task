@@ -8,7 +8,7 @@ A powerful command-line AI assistant built with the [Mastra](https://mastra.ai/)
 - **Local Embeddings**: Uses Hugging Face's `all-MiniLM-L6-v2` via the Inference API for vectorization.
 - **Intelligent Reasoning**: Powered by OpenRouter's `nvidia/nemotron-3-nano-30b-a3b:free` by default.
 - **Streaming CLI**: Real-time responses with feedback when tools are being used.
-- **Persistent Memory**: Maintains conversation context across multiple turns.
+- **Persistent Memory**: Maintains conversation context across multiple turns using an in-memory store (volatile).
 - **Travel Tools**: Integrated tools for flight schedules, hotel information, and currency conversion (USD to NGN).
 
 ## Prerequisites
@@ -49,6 +49,10 @@ npm run dev
 npm run build
 npm start
 ```
+
+## Storage
+
+The assistant uses an `InMemoryStore` to maintain conversation history. Note that this memory is volatile and will be reset if the application is restarted. This approach was chosen to ensure maximum compatibility across different operating systems without requiring native compilation of database drivers.
 
 ## Available Tools
 
