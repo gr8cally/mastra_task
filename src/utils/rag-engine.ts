@@ -17,7 +17,12 @@ export class RAGEngine {
     const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
     const parsedUrl = new URL(chromaUrl);
     
-    this.hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    const hfApiKey = process.env.HUGGINGFACE_API_KEY || process.env.HF_API_KEY;
+    if (!hfApiKey) {
+      throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_API_KEY or HF_API_KEY in your .env file.');
+    }
+    
+    this.hf = new HfInference(hfApiKey);
     this.embeddingModel = process.env.EMBEDDING_MODEL_NAME || 'sentence-transformers/all-MiniLM-L6-v2';
 
     this.vectorStore = new ChromaVector({
