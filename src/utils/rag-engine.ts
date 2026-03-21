@@ -17,7 +17,12 @@ export class RAGEngine {
     const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
     const parsedUrl = new URL(chromaUrl);
     
-    this.hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    const hfApiKey = process.env.HUGGINGFACE_API_KEY || process.env.HF_API_KEY;
+    if (!hfApiKey) {
+      throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_API_KEY or HF_API_KEY in your .env file.');
+    }
+    
+    this.hf = new HfInference(hfApiKey);
     this.embeddingModel = process.env.EMBEDDING_MODEL_NAME || 'sentence-transformers/all-MiniLM-L6-v2';
 
     this.vectorStore = new ChromaVector({
@@ -114,17 +119,20 @@ export class RAGEngine {
   }
 
   async query(userQuery: string) {
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Generating embedding for query: "${userQuery}"`);
     const queryVector = await this.hf.featureExtraction({
       model: this.embeddingModel,
       inputs: userQuery,
     }) as number[];
 
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Querying vector store...`);
     const results = await this.vectorStore.query({
       indexName: this.collectionName,
       queryVector,
       topK: 5,
     });
 
+    if (process.env.DEBUG === 'true') console.log(`[RAG Engine] Found ${results?.length || 0} results.`);
     return results;
   }
 }

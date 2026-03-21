@@ -10,26 +10,33 @@ export const createRagTool = (ragEngine: RAGEngine) => {
       query: z.string().describe('The search query to find relevant information.'),
     }),
     execute: async ({ query }) => {
-      const results = await ragEngine.query(query);
+      console.log(`\n[RAG Tool] Searching for: "${query}"...`);
+      let results = await ragEngine.query(query);
       
-      if (!results || results.length === 0) {
-        return {
-          text: 'No relevant information found in the knowledge base.',
-        };
+      if (process.env.DEBUG === 'true') console.log(`[RAG Tool] Raw results count:`, results?.length || 0);
+      
+      // Handle potential results structure variations from ChromaVector
+      if (results && !Array.isArray(results) && (results as any).results) {
+        results = (results as any).results;
+      }
+      
+      if (!results || !Array.isArray(results) || results.length === 0) {
+        if (process.env.DEBUG === 'true') console.log(`[RAG Tool] No results found.`);
+        return 'No relevant information found in the documents.';
       }
 
       // Format results for the LLM
       const formattedResults = results
-        .map((res, index) => {
-          const source = res.metadata?.filename || res.metadata?.source || 'Unknown Source';
+        .map((res: any, index: number) => {
           const content = res.metadata?.text || res.document || 'No content available';
-          return `[Source ${index + 1}: ${source}]\n${content}`;
+          const source = res.metadata?.filename || 'unknown file';
+          return `[DOCUMENT SNIPPET ${index + 1} (from ${source})]: ${content}`;
         })
-        .join('\n\n---\n\n');
+        .join('\n\n');
 
-      return {
-        text: `Found the following relevant information:\n\n${formattedResults}`,
-      };
+      if (process.env.DEBUG === 'true') console.log(`[RAG Tool] Formatted results length:`, formattedResults.length);
+
+      return `FOUND INFORMATION:\n${formattedResults}`;
     },
   });
 };
