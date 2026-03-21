@@ -9,7 +9,7 @@ dotenv.config();
  * Initializes the Mastra workspace.
  *
  * The Mastra constructor acts as the workspace/registry where all agents,
- * tools, and storage are registered — satisfying the task.md requirement:
+ * tools, and storage are registered:
  * "You must register it inside a Workspace".
  */
 export const initializeMastra = async () => {

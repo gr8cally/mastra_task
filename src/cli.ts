@@ -12,7 +12,7 @@ async function main() {
 
   const mastra = await initializeMastra();
 
-  // Start the Mastra HTTP server (task.md: "You must start a Mastra Server")
+  // Start the Mastra HTTP server
   await startServer(mastra);
 
   const agent = mastra.getAgent('assistant');

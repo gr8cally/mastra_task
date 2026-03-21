@@ -58,14 +58,7 @@ When the CLI starts, it also launches an HTTP server on port `4111` (configurabl
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET`  | `/api/health` | Health check — returns `{ "status": "ok" }` |
-| `POST` | `/api/agents/assistant/generate` | Stream a response from the agent (NDJSON) |
 
-**Example:**
-```bash
-curl -X POST http://localhost:4111/api/agents/assistant/generate \
-  -H "Content-Type: application/json" \
-  -d '{"messages": "What flights are available?"}'
-```
 
 ## Storage
 
