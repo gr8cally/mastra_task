@@ -7,6 +7,7 @@ A powerful command-line AI assistant built with the [Mastra](https://mastra.ai/)
 - **Retrieval-Augmented Generation (RAG)**: Automatically indexes documents in the `data/` directory into ChromaDB.
 - **Local Embeddings**: Uses Hugging Face's `all-MiniLM-L6-v2` via the Inference API for vectorization.
 - **Intelligent Reasoning**: Powered by OpenRouter's `nvidia/nemotron-3-nano-30b-a3b:free` by default.
+- **Mastra Server**: Starts an HTTP server (default port `4111`) exposing the agent over REST alongside the CLI.
 - **Streaming CLI**: Real-time responses with feedback when tools are being used.
 - **Persistent Memory**: Maintains conversation context across multiple turns using an in-memory store (volatile).
 - **Travel Tools**: Integrated tools for flight schedules, hotel information, and currency conversion (USD to NGN).
@@ -48,6 +49,22 @@ npm run dev
 ```bash
 npm run build
 npm start
+```
+
+## Server API
+
+When the CLI starts, it also launches an HTTP server on port `4111` (configurable via `MASTRA_SERVER_PORT`).
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/api/health` | Health check — returns `{ "status": "ok" }` |
+| `POST` | `/api/agents/assistant/generate` | Stream a response from the agent (NDJSON) |
+
+**Example:**
+```bash
+curl -X POST http://localhost:4111/api/agents/assistant/generate \
+  -H "Content-Type: application/json" \
+  -d '{"messages": "What flights are available?"}'
 ```
 
 ## Storage

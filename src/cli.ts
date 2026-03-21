@@ -1,5 +1,6 @@
 import { createInterface } from 'readline/promises';
 import { initializeMastra } from './mastra.js';
+import { startServer } from './server.js';
 import { renderStreamChunk } from './utils/stream-renderer.js';
 import dotenv from 'dotenv';
 
@@ -10,6 +11,10 @@ async function main() {
   console.log('Loading agent and knowledge base...');
 
   const mastra = await initializeMastra();
+
+  // Start the Mastra HTTP server (task.md: "You must start a Mastra Server")
+  await startServer(mastra);
+
   const agent = mastra.getAgent('assistant');
 
   const rl = createInterface({

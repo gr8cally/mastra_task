@@ -38,10 +38,11 @@ export const startServer = (mastra: Mastra): Promise<ReturnType<typeof createSer
           }
 
           // Read request body
-          const body = await new Promise<string>((resolve) => {
+          const body = await new Promise<string>((resolve, reject) => {
             let data = '';
             req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
             req.on('end', () => resolve(data));
+            req.on('error', (err) => reject(err));
           });
 
           const { messages } = JSON.parse(body) as { messages: string };
