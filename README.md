@@ -40,12 +40,7 @@ A powerful command-line AI assistant built with the [Mastra](https://mastra.ai/)
 
 ## Usage
 
-**Development Mode**:
-```bash
-npm run dev
-```
-
-**Production Mode**:
+**To Run**:
 ```bash
 npm run build
 npm start
